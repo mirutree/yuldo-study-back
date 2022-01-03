@@ -1,9 +1,0 @@
-node 자제가 서버가 아니라 노드에서 제공하는 http모듈이 서버
-
-app.get -> 가져오다
-post -> 생성하다
-put -> 전체수정
-delete -> 제거
-patch -> 부분수정
-
-
