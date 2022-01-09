@@ -10,12 +10,13 @@ router.get("/", async (req, res) => {
   try {
     // 로그인 중인지 확인한다.
     // 차단 된 사람인지 확인한다.
+
     // 카테고리 확인한다.
     const { category } = req.query;
 
     let sql = "";
-    if (!category) {
-        sql = "SELECT * FROM `tb_board` WHERE state = 'Y'";
+    if (!category) { // 카테고리가 없으면 (전체 카테고리면)
+        sql = "SELECT * FROM `tb_board` WHERE state = 'Y'"; // 디비설계할 떄부터 state가 N이어야 삭제된 글 Y = 삭제안된 글
     } else {
         sql = "SELECT * FROM `tb_board` WHERE category = ? AND state = 'Y'";
     }
@@ -25,7 +26,7 @@ router.get("/", async (req, res) => {
       type: QueryTypes.SELECT,
     });
     // 클라이언트로 데이터를 넘겨준다.
-    res.status(200).json({ result: 1, data: results });
+    res.status(200).json({ result: 1, data: results }); // 성공일 경우 result가 1
     // 디비의 리턴값을 확인한다
     // 상태코드 혹은 데이터를 클라이언트에 리턴한다.
   } catch (e) {
@@ -40,7 +41,7 @@ router.get("/:board_seq", async (req, res) => {
     // 로그인 중인지 확인한다. -> 차단되어 있으면 return
     // 글 번호를 받아와서
     // 글 번호에 맞는 글 1개를 가져온다.
-    const { board_seq } = req.params;
+    const { board_seq } = req.params; // 위 :board_seq변수를 그대로 가져옴
 
     let sql = "SELECT * FROM `tb_board` WHERE seq = ? AND state = 'Y'";
     const results = await db.sequelize.query(sql, {
@@ -144,12 +145,12 @@ router.delete("/:board_seq", async (req, res) => {
       let sql = "UPDATE SET `tb_board` state = 'N' WHERE seq = ?";
       const result = await db.sequelize.query(sql, {
         replacements: [board_seq],
-        type: QueryTypes.DELETE,
+        type: QueryTypes.UPDATE,
       });
 
       res.status(200).json({ result: 1, data: result });
     } else {
-      res.status(401).json({ result: -1, data: null, err: "존재하지 않는 글 입니다." });
+      res.status(401).json({ result: -1, data: null, err: "존재하지 않는 글 이거나 글쓴이가 아닙니다." });
     }
   } catch (e) {
     console.error(e);
@@ -172,7 +173,7 @@ router.get("/:type/:search", async (req, res) => {
     // 타입이 없으면 제목 + 내용
     let sql = "";
     if (type === "title") {
-      sql = `SELECT * FROM tb_board WHERE title LIKE :search AND state = 'Y'`;
+      sql = `SELECT * FROM tb_board WHERE title LIKE :search AND state = 'Y'`; // like검색을 할때는 ?가 안먹힘
     } else if (type === "contents") {
       sql = `SELECT * FROM tb_board WHERE contents LIKE :search AND state = 'Y'`;
     } else {
@@ -180,7 +181,7 @@ router.get("/:type/:search", async (req, res) => {
       sql = `SELECT * FROM tb_board WHERE title LIKE :search OR contents LIKE :search AND state = 'Y'`;
     }
 
-    if (category) {
+    if (category) { // 카테고리가 있는 경우
       sql = sql + " AND category = :category";
     }
 
