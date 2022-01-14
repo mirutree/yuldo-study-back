@@ -59,7 +59,7 @@ router.get("/:board_seq", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     // 프론트에서 받은 데이터
-    const { title, contents, writer } = req.body;
+    const { title, contents, writer, category } = req.body;
     // 데이터의 유효성을 확인한다.
     if (!title || !contents || !writer) {
       res
@@ -71,9 +71,9 @@ router.post("/", async (req, res) => {
 
     // 디비에 넣어준다.
     const [results, metadata] = await db.sequelize.query(
-      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer) VALUES(?, 'F', ?, ?, ?)",
+      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer) VALUES(?, ?, ?, ?, ?)",
       {
-        replacements: [user_seq, title, contents, writer],
+        replacements: [user_seq, category, title, contents, writer],
         type: QueryTypes.INSERT,
       }
     );
