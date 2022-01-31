@@ -8,12 +8,12 @@ const morgan = require("morgan");
 const userRoute = require("./routes/user");
 const postRoute = require("./routes/post");
 const commentRoute = require("./routes/comment");
-const db = require('./models');
+const db = require("./models");
 
 db.sequelize
   .sync()
   .then(() => {
-    console.log('db 연결 성공');
+    console.log("db 연결 성공");
   })
   .catch(console.error);
 

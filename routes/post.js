@@ -4,7 +4,6 @@ const router = express.Router();
 const db = require("../models");
 const { QueryTypes } = require("sequelize");
 
-
 // 전체 글 보기
 router.get("/", async (req, res) => {
   try {
@@ -44,7 +43,7 @@ router.get("/:board_seq", async (req, res) => {
 
     let sql = "SELECT * FROM `tb_board` WHERE seq = ? AND state = 'Y'";
     const results = await db.sequelize.query(sql, {
-      replacements: [ board_seq ],
+      replacements: [board_seq],
       type: QueryTypes.SELECT,
     });
     // 클라이언트로 데이터를 넘겨준다.

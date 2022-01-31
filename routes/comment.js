@@ -12,7 +12,7 @@ router.get("/:board_seq", async (req, res) => {
     const { board_seq } = req.params;
     // 글 번호로 댓글을 가져온다.
     let sql =
-      "SELECT * FROM `tb_comments` WHERE board_seq = ? ORDER_BY ins_dttm DESC";
+      "SELECT * FROM `tb_comments` WHERE board_seq = ? ORDER BY ins_dttm DESC";
 
     // db에서 글을 불러온다
     const results = await db.sequelize.query(sql, {
@@ -21,12 +21,12 @@ router.get("/:board_seq", async (req, res) => {
     });
 
     if (results) {
-      res.status(200).json({ result: 1, data: reulsts });
+      res.status(200).json({ result: 1, data: results });
     } else {
       let sql = "SELECT COUNT(*) as cnt FROM `tb_board` WHERE board_seq = ?";
 
       // db에서 글을 불러온다
-      const results = await db.sequelize.query(sql, {
+      const [results] = await db.sequelize.query(sql, {
         replacements: [board_seq],
         type: QueryTypes.SELECT,
       });
@@ -53,9 +53,10 @@ router.get("/:board_seq", async (req, res) => {
 router.post("/:board_seq", async (req, res) => {
   try {
     // 프론트에서 받은 데이터
-    const { contents, writer, comment_seq } = req.body;
+    let { contents, writer, comment_seq } = req.body;
     const { board_seq } = req.params;
     // 데이터의 유효성을 확인한다.
+    writer = "익명";
     if (!contents || !writer) {
       return res
         .status(401)
@@ -64,42 +65,35 @@ router.post("/:board_seq", async (req, res) => {
     // 유저가 로그인 중인지 확인한다. -> 로그인 구현하면 확인
 
     // 글이 실제 존재하는지 (삭제 되지 않았는지) 확인한다.
-    let sql = "SELECT COUNT(*) as cnt FROM `tb_board` WHERE board_seq = ?";
+    let sql = "SELECT COUNT(*) as cnt FROM `tb_board` WHERE seq = ?";
 
     // db에서 글을 불러온다
-    const results = await db.sequelize.query(sql, {
+    const [results] = await db.sequelize.query(sql, {
       replacements: [board_seq],
       type: QueryTypes.SELECT,
     });
 
-    if (results.cnt > 0) {
+    if (parseInt(results.cnt) > 0) {
       if (comment_seq) {
         // 대댓글일 경우 댓글이 실제 존재하는지도 확인한다.
         let sql =
-          "SELECT COUNT(*) as cnt, class, index FROM `tb_comments` WHERE comment_seq = ?";
+          "SELECT COUNT(*) as cnt, seq FROM `tb_comments` WHERE seq = ?";
 
         // db에서 글을 불러온다
-        const results = await db.sequelize.query(sql, {
+        const [results] = await db.sequelize.query(sql, {
           replacements: [comment_seq],
           type: QueryTypes.SELECT,
         });
         if (results.cnt > 0) {
           // 대댓글을 DB에 넣어준다
           // 디비에 넣어준다.
-          let comment_class = results.class;
-          comment_class = parseInt(comment_class) + 1;
-          
-        
+          //let comment_class = results.seq;
+          //comment_class = parseInt(comment_class);
+
           const [results, metadata] = await db.sequelize.query(
-            "INSERT INTO `tb_comments`(user_seq, board_seq, contents, writer, group, class) VALUES(1, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO `tb_comments`(user_seq, board_seq, contents, writer, comment_group) VALUES(1, ?, ?, ?, ?)",
             {
-              replacements: [
-                board_seq,
-                contents,
-                writer,
-                comment_seq,
-                comment_class,
-              ],
+              replacements: [board_seq, contents, writer, comment_seq],
               type: QueryTypes.INSERT,
             }
           );

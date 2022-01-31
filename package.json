@@ -1,9 +1,15 @@
 {
   "name": "yuldo-study-back",
   "version": "1.0.0",
-  "description": "",
+  "description": "backend",
   "main": "index.js",
   "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon"
+  },
+  "author": "zena",
+  "license": "ISC",
   "dependencies": {
     "axios": "^0.24.0",
     "bcrypt": "^5.0.1",
@@ -23,14 +29,5 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
-  },
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index"
-  },
-  "author": "mirutree",
-  "license": "ISC",
-  "optionalDependencies": {
-    "fsevents": "*"
   }
 }
