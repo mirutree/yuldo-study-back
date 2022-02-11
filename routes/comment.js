@@ -12,7 +12,7 @@ router.get("/:board_seq", async (req, res) => {
     const { board_seq } = req.params;
     // 글 번호로 댓글을 가져온다.
     let sql =
-      "SELECT * FROM `tb_comments` WHERE board_seq = ? ORDER BY ins_dttm DESC";
+      "SELECT * FROM `tb_comments` WHERE board_seq = ? ORDER BY comment_group, seq";
 
     // db에서 글을 불러온다
     const results = await db.sequelize.query(sql, {
@@ -106,12 +106,29 @@ router.post("/:board_seq", async (req, res) => {
         }
       } else {
         // 대댓글이 아니고 그냥 댓글인 경우 db 저장
+
         // 디비에 넣어준다.
         const [results, metadata] = await db.sequelize.query(
           "INSERT INTO `tb_comments`(user_seq, board_seq, contents, writer) VALUES(1, ?, ?, ?)",
           {
             replacements: [board_seq, contents, writer],
             type: QueryTypes.INSERT,
+          }
+        );
+        let sql = "SELECT last_insert_id() as result";
+
+        // db에서 글을 불러온다
+        const [results2] = await db.sequelize.query(sql, {
+          replacements: [],
+          type: QueryTypes.SELECT,
+        });
+
+        console.log(results2);
+        const [results3] = await db.sequelize.query(
+          "UPDATE `tb_comments` SET comment_group = ? WHERE seq = ?",
+          {
+            replacements: [results2.result, results2.result],
+            type: QueryTypes.UPDATE,
           }
         );
       }

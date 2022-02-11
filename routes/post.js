@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
     let sql = "";
     if (!category) {
       // 전체 카테고리
-      sql = "SELECT * FROM `tb_board` WHERE state = 'Y'";
+      sql = "SELECT * FROM `tb_board` WHERE state = 'Y' ORDER BY ins_dttm DESC";
     } else {
       sql = "SELECT * FROM `tb_board` WHERE category = ? AND state = 'Y'";
     }
@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
 
     // 디비에 넣어준다.
     const [results, metadata] = await db.sequelize.query(
-      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer) VALUES(?, ?, ?, ?, ?)",
+      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer, ins_dttm) VALUES(?, ?, ?, ?, ?, now())",
       {
         replacements: [user_seq, category, title, contents, writer],
         type: QueryTypes.INSERT,
