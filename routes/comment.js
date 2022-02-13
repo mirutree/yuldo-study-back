@@ -97,6 +97,14 @@ router.post("/:board_seq", async (req, res) => {
               type: QueryTypes.INSERT,
             }
           );
+          const [results3, metadata1] = await db.sequelize.query(
+              "UPDATE `tb_board` SET upt_dttm = NOW(), comments_cnt = comments_cnt + 1 WHERE seq = ?",
+              {
+                replacements: [board_seq],
+                type: QueryTypes.UPDATE,
+              }
+          );
+          return res.status(200).json({ result: 1, data: results });
         } else {
           return res.status(401).json({
             result: -2,
@@ -115,22 +123,25 @@ router.post("/:board_seq", async (req, res) => {
             type: QueryTypes.INSERT,
           }
         );
-        let sql = "SELECT last_insert_id() as result";
 
-        // db에서 글을 불러온다
-        const [results2] = await db.sequelize.query(sql, {
-          replacements: [],
-          type: QueryTypes.SELECT,
-        });
-
-        console.log(results2);
-        const [results3] = await db.sequelize.query(
+        //console.log(results2);
+        const [results3, metadata1] = await db.sequelize.query(
           "UPDATE `tb_comments` SET comment_group = ? WHERE seq = ?",
           {
-            replacements: [results2.result, results2.result],
+            replacements: [results, results],
             type: QueryTypes.UPDATE,
           }
         );
+        const [results4, metadata2] = await db.sequelize.query(
+            "UPDATE `tb_board` SET upt_dttm = NOW(), comments_cnt = comments_cnt + 1 WHERE seq = ?",
+            {
+              replacements: [board_seq],
+              type: QueryTypes.UPDATE,
+            }
+        );
+        return res.status(200).json({ result: 1, data: results });
+        //console.log("result3", results3);
+        //console.log("metadata", metadata1);
       }
     } else {
       return res
@@ -138,7 +149,6 @@ router.post("/:board_seq", async (req, res) => {
         .json({ result: -1, data: null, err: "존재하지 않는 글 입니다." });
     }
 
-    res.status(200).json({ result: 1, data: results });
     // 디비의 리턴값을 확인한다
     // 상태코드 혹은 데이터를 클라이언트에 리턴한다.
   } catch (e) {
@@ -202,6 +212,14 @@ router.delete("/:comment_seq", async (req, res) => {
         replacements: [comment_seq],
         type: QueryTypes.DELETE,
       });
+
+      const [results3, metadata1] = await db.sequelize.query(
+          "UPDATE `tb_board` SET comments_cnt = comments_cnt - 1 WHERE seq = ?",
+          {
+            replacements: [board_seq],
+            type: QueryTypes.UPDATE,
+          }
+      );
 
       res.status(200).json({ result: 1, data: result });
     } else {

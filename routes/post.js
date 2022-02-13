@@ -16,9 +16,9 @@ router.get("/", async (req, res) => {
     let sql = "";
     if (!category) {
       // 전체 카테고리
-      sql = "SELECT * FROM `tb_board` WHERE state = 'Y' ORDER BY ins_dttm DESC";
+      sql = "SELECT *, DATE_FORMAT(ins_dttm, '%Y-%m-%d') as ins_dttm_fm FROM `tb_board` WHERE state = 'Y' ORDER BY upt_dttm DESC";
     } else {
-      sql = "SELECT * FROM `tb_board` WHERE category = ? AND state = 'Y'";
+      sql = "SELECT *, DATE_FORMAT(ins_dttm, '%Y-%m-%d') as ins_dttm_fm FROM `tb_board` WHERE category = ? AND state = 'Y' ORDER BY upt_dttm DESC";
     }
     // db에서 카테고리 글을 불러온다
     const results = await db.sequelize.query(sql, {
@@ -39,15 +39,23 @@ router.get("/:board_seq", async (req, res) => {
     // 로그인 중인지 확인한다. -> 차단되어있으면 return
     // 글번호를 받아와서
     // 글번호에 맞는 글 1개를 가져온다.
-    const { board_seq } = req.params;
+    let { board_seq } = req.params;
+    board_seq = parseInt(board_seq);
 
-    let sql = "SELECT * FROM `tb_board` WHERE seq = ? AND state = 'Y'";
+    let sql = "SELECT *, DATE_FORMAT(ins_dttm, '%Y-%m-%d %T') as ins_dttm_fm FROM `tb_board` WHERE seq = ? AND state = 'Y'";
     const results = await db.sequelize.query(sql, {
       replacements: [board_seq],
       type: QueryTypes.SELECT,
     });
+
+    let sql2 = "SELECT user_seq FROM `tb_like` WHERE category = 'B' AND board_seq = ?";
+    const results2 = await db.sequelize.query(sql2, {
+      replacements: [board_seq],
+      type: QueryTypes.SELECT,
+    });
+
     // 클라이언트로 데이터를 넘겨준다.
-    res.status(200).json({ result: 1, data: results });
+    res.status(200).json({ result: 1, data: results, liker: results2 });
   } catch (e) {
     console.error(e);
     res.status(500).json({ result: -100, data: null, err: "서버 에러 입니다" });
@@ -70,7 +78,7 @@ router.post("/", async (req, res) => {
 
     // 디비에 넣어준다.
     const [results, metadata] = await db.sequelize.query(
-      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer, ins_dttm) VALUES(?, ?, ?, ?, ?, now())",
+      "INSERT INTO `tb_board`(user_seq, category, title, contents, writer, ins_dttm, upt_dttm) VALUES(?, ?, ?, ?, ?, NOW(), NOW())",
       {
         replacements: [user_seq, category, title, contents, writer],
         type: QueryTypes.INSERT,
@@ -204,5 +212,42 @@ router.get("/:type/:search", async (req, res) => {
     res.status(500).json({ result: -100, data: null, err: "서버 에러 입니다" });
   }
 });
+
+// 좋아요
+router.post("/likeUpdate", async (req, res) => {
+  try {
+    // 프론트에서 받은 데이터
+    const { board_seq, user_seq } = req.body;
+    // 데이터의 유효성을 확인한다.
+    if (!board_seq || !user_seq) {
+      res
+          .status(401)
+          .json({ result: -1, data: null, err: "유효하지 않은 데이터 입니다." });
+    }
+    // 유저가 로그인 중인지 확인한다. -> 로그인 구현하면 확인
+
+    // 디비에 넣어준다.
+    const [results, metadata] = await db.sequelize.query(
+        "INSERT INTO `tb_like`(user_seq, board_seq, category, ins_dttm) VALUES(?, ?, 'B', NOW())",
+        {
+          replacements: [user_seq, board_seq],
+          type: QueryTypes.INSERT,
+        }
+    );
+    let sql =
+        "UPDATE `tb_board` SET b_like = b_like + 1 WHERE seq = ?";
+    const [results2, metadata2] = await db.sequelize.query(sql, {
+      replacements: [board_seq],
+      type: QueryTypes.UPDATE,
+    });
+    res.status(200).json({ result: 1, data: results });
+    // 디비의 리턴값을 확인한다
+    // 상태코드 혹은 데이터를 클라이언트에 리턴한다.
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ result: -100, data: null, err: "서버 에러 입니다" });
+  }
+});
+
 
 module.exports = router;
